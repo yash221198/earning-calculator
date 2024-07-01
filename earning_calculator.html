@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadowfax Earning Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            margin: 20px;
+            text-align: center;
+            animation: slideIn 1s ease-out;
+        }
+        h2, h3 {
+            color: #ff6f00;
+        }
+        label, input, button, select {
+            display: block;
+            margin: 10px auto;
+            width: 80%;
+            max-width: 400px;
+        }
+        input, select {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ff6f00;
+            color: #fff;
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #e65c00;
+        }
+        img {
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            max-width: 600px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #ff6f00;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #ff6f00;
+            margin-top: 10px;
+        }
+        .back-button {
+            background-color: #ff6f00;
+            color: #fff;
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        .back-button:hover {
+            background-color: #e65c00;
+        }
+        .separator {
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <img src="shadowfax logo.png" alt="Shadowfax Logo" width="200">
+    <h2>Shadowfax Earning Calculator</h2>
+    <div id="profileSelection">
+        <label for="profile">Apna profile select karo:</label>
+        <select id="profile">
+            <option value="regularBiker">Regular Biker</option>
+            <option value="superkingBiker">Superking Biker</option>
+            <option value="regularCyclist">Regular Cyclist</option>
+            <option value="superkingCyclist">Superking Cyclist</option>
+        </select>
+        <button type="button" onclick="showMainForm()">Next</button>
+        <p class="note">Agar aap ne abhi last 7 days mein hi Shadowfax join kiya hai toh Aap ek Regular Biker or Regular Cyclist hai</p>
+    </div>
+    <div id="mainForm" class="hidden">
+        <form id="calculatorForm">
+            <label for="totalOrders">Aaj aap kitne orders deliver karenge?</label>
+            <input type="number" id="totalOrders" name="totalOrders"><br><br>
+            
+            <label for="dinnerOrders">Aaj raat 7 baje ke baad kitne orders deliver karenge?</label>
+            <input type="number" id="dinnerOrders" name="dinnerOrders"><br><br>
+            
+            <button type="button" onclick="calculateEarnings()">Calculate</button>
+        </form>
+        
+        <h3>Total Earnings: Rs. <span id="totalEarnings">0.00</span></h3>
+        <div id="basePayMessage" class="hidden">
+            <p>Congratulations Dost! Yeh rahi aapki Total Earning. Aapko mil raha hai Har Order pe Rs.25 Base Pay + Distance Pay on Every Order</p>
+        </div>
+        <div id="mgMessage" class="hidden">
+            <p>Congratulations Dost! Aap Earn Kar rahe humaari MG. Please check out MG Structure</p>
+            <table>
+                <tr>
+                    <th colspan="2">Full Day MG - For Full Timers (8 am to 3 am)</th>
+                </tr>
+                <tr>
+                    <td>Orders</td>
+                    <td>MG Amount (Rs.)</td>
+                </tr>
+                <tbody id="fullDayMGRows"></tbody>
+            </table>
+            <p>Yeh Full Day MG amount aapko guaranteed milega (minimum <span id="minDinnerOrders"></span> orders Dinner Slot mein)</p>
+            <div class="separator"></div>
+            <table>
+                <tr>
+                    <th colspan="2">Dinner MG - For Part Timers (7 pm to 3 am)</th>
+                </tr>
+                <tr>
+                    <td>Orders</td>
+                    <td>MG Amount (Rs.)</td>
+                </tr>
+                <tbody id="dinnerMGRows"></tbody>
+            </table>
+        </div>
+        <p class="note">Yeh Earning 95% Accurate hai</p>
+        <button class="back-button" onclick="goBack()">Back</button>
+    </div>
+    
+    <script>
+        function showMainForm() {
+            document.getElementById('profileSelection').classList.add('hidden');
+            document.getElementById('mainForm').classList.remove('hidden');
+        }
+
+        function goBack() {
+            document.getElementById('mainForm').classList.add('hidden');
+            document.getElementById('profileSelection').classList.remove('hidden');
+        }
+
+        function calculateEarnings() {
+            const profile = document.getElementById('profile').value;
+            
+            // Distance payout details
+            const fmDistances = {
+                regularBiker: 2.4,
+                superkingBiker: 2.4,
+                regularCyclist: 1.7,
+                superkingCyclist: 1.7
+            };
+            const lmDistances = {
+                regularBiker: 3.7,
+                superkingBiker: 3.7,
+                regularCyclist: 2.3,
+                superkingCyclist: 2.3
+            };
+
+            const avgFM = fmDistances[profile];
+            const avgLM = lmDistances[profile];
+
+            // Calculate FM pay
+            const fmPay = avgFM > 2 ? (avgFM - 2) * 4 : 0;
+
+            // Calculate LM pay
+            let lmPay = 0;
+            if (avgLM > 2 && avgLM <= 4) {
+                lmPay = (avgLM - 2) * 5;
+            } else if (avgLM > 4 && avgLM <= 6) {
+                lmPay = (2 * 5) + ((avgLM - 4) * 8);
+            } else if (avgLM > 6 && avgLM <= 10) {
+                lmPay = (2 * 5) + (2 * 8) + ((avgLM - 6) * 10);
+            } else if (avgLM > 10) {
+                lmPay = (2 * 5) + (2 * 8) + (4 * 10) + ((avgLM - 10) * 15);
+                if (lmPay > 290) lmPay = 290;
+            }
+
+            const basePay = 25; // Base pay for up to 2 km
+            const distancePay = fmPay + lmPay;
+
+            const totalOrders = parseInt(document.getElementById('totalOrders').value) || 0;
+            const dinnerOrders = parseInt(document.getElementById('dinnerOrders').value) || 0;
+
+            // Calculate base pay earnings
+            const baseEarnings = totalOrders * (basePay + distancePay);
+
+            // Determine the current day
+            const currentDay = new Date().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+            // Determine MG structure based on profile
+            const mgStructures = {
+                regularBiker: {
+                    fullDay: [
+                        { min: 6, max: 10, amount: 250 },
+                        { min: 11, max: 16, amount: 500 },
+                        { min: 17, max: 22, amount: 900 },
+                        { min: 23, max: 27, amount: 1225 },
+                        { min: 28, max: 31, amount: 1525 },
+                        { min: 32, max: Infinity, amount: 2000 }
+                    ],
+                    dinner: [
+                        { min: 5, max: 6, amount: 225 },
+                        { min: 7, max: 8, amount: 350 },
+                        { min: 9, max: 10, amount: 450 },
+                        { min: 11, max: 13, amount: 600 },
+                        { min: 14, max: 15, amount: 800 },
+                        { min: 16, max: Infinity, amount: 1050 }
+                    ],
+                    minDinnerOrders: currentDay >= 1 && currentDay <= 5 ? 6 : 8
+                },
+                superkingBiker: {
+                    fullDay: [
+                        { min: 6, max: 11, amount: 250 },
+                        { min: 12, max: 17, amount: 550 },
+                        { min: 18, max: 23, amount: 950 },
+                        { min: 24, max: 28, amount: 1250 },
+                        { min: 29, max: 31, amount: 1600 },
+                        { min: 32, max: Infinity, amount: 2100 }
+                    ],
+                    dinner: [
+                        { min: 5, max: 6, amount: 225 },
+                        { min: 7, max: 8, amount: 350 },
+                        { min: 9, max: 10, amount: 450 },
+                        { min: 11, max: 13, amount: 625 },
+                        { min: 14, max: 15, amount: 800 },
+                        { min: 16, max: Infinity, amount: 1100 }
+                    ],
+                    minDinnerOrders: currentDay >= 1 && currentDay <= 5 ? 6 : 8
+                },
+                regularCyclist: {
+                    fullDay: [
+                        { min: 7, max: 10, amount: 200 },
+                        { min: 11, max: 14, amount: 350 },
+                        { min: 15, max: 20, amount: 500 },
+                        { min: 21, max: 25, amount: 850 },
+                        { min: 26, max: 30, amount: 1050 },
+                        { min: 31, max: Infinity, amount: 1250 }
+                    ],
+                    dinner: [
+                        { min: 4, max: 7, amount: 150 },
+                        { min: 8, max: 10, amount: 300 },
+                        { min: 11, max: 13, amount: 450 },
+                        { min: 14, max: 15, amount: 600 },
+                        { min: 16, max: Infinity, amount: 850 }
+                    ],
+                    minDinnerOrders: currentDay >= 1 && currentDay <= 5 ? 6 : 8
+                },
+                superkingCyclist: {
+                    fullDay: [
+                        { min: 7, max: 10, amount: 200 },
+                        { min: 11, max: 14, amount: 350 },
+                        { min: 15, max: 21, amount: 550 },
+                        { min: 22, max: 26, amount: 900 },
+                        { min: 27, max: 29, amount: 1100 },
+                        { min: 30, max: Infinity, amount: 1300 }
+                    ],
+                    dinner: [
+                        { min: 4, max: 7, amount: 150 },
+                        { min: 8, max: 10, amount: 300 },
+                        { min: 11, max: 13, amount: 450 },
+                        { min: 14, max: 15, amount: 600 },
+                        { min: 16, max: Infinity, amount: 850 }
+                    ],
+                    minDinnerOrders: currentDay >= 1 && currentDay <= 5 ? 6 : 8
+                }
+            };
+
+            const mgStructure = mgStructures[profile];
+
+            // Calculate Full Day MG (only if minimum dinner orders condition is met)
+            let fullDayMG = 0;
+            if (dinnerOrders >= mgStructure.minDinnerOrders) {
+                for (let i = 0; i < mgStructure.fullDay.length; i++) {
+                    if (totalOrders >= mgStructure.fullDay[i].min && totalOrders <= mgStructure.fullDay[i].max) {
+                        fullDayMG = mgStructure.fullDay[i].amount;
+                        break;
+                    }
+                }
+            }
+
+            // Calculate Dinner MG
+            let dinnerMG = 0;
+            for (let i = 0; i < mgStructure.dinner.length; i++) {
+                if (dinnerOrders >= mgStructure.dinner[i].min && dinnerOrders <= mgStructure.dinner[i].max) {
+                    dinnerMG = mgStructure.dinner[i].amount;
+                    break;
+                }
+            }
+
+            // Final MG calculation
+            let finalMG = Math.max(fullDayMG, dinnerMG);
+
+            // Total Earnings calculation
+            const totalEarnings = Math.max(baseEarnings, finalMG);
+
+            // Display the total earnings
+            document.getElementById('totalEarnings').innerText = totalEarnings.toFixed(2);
+
+            // Display appropriate message
+            if (totalEarnings === baseEarnings) {
+                document.getElementById('basePayMessage').classList.remove('hidden');
+                document.getElementById('mgMessage').classList.add('hidden');
+            } else {
+                document.getElementById('mgMessage').classList.remove('hidden');
+                document.getElementById('basePayMessage').classList.add('hidden');
+                document.getElementById('minDinnerOrders').innerText = mgStructure.minDinnerOrders;
+                populateMGTable('fullDayMGRows', mgStructure.fullDay);
+                populateMGTable('dinnerMGRows', mgStructure.dinner);
+            }
+        }
+
+        function populateMGTable(tableId, mgArray) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+            for (let i = 0; i < mgArray.length; i++) {
+                const row = document.createElement('tr');
+                const ordersCell = document.createElement('td');
+                ordersCell.textContent = `${mgArray[i].min}${mgArray[i].max === Infinity ? '+' : ' - ' + mgArray[i].max} Orders`;
+                const amountCell = document.createElement('td');
+                amountCell.textContent = `Rs. ${mgArray[i].amount}`;
+                row.appendChild(ordersCell);
+                row.appendChild(amountCell);
+                tableBody.appendChild(row);
+            }
+        }
+    </script>
+</body>
+</html>
